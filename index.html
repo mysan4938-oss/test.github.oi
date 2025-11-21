@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competency Test Answers</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom font and smooth background */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        /* Custom scrollbar for better aesthetics on desktop */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+        }
+    </style>
+</head>
+<!-- Body class is dynamic: initially centered for login, then reverts for content -->
+<body class="min-h-screen p-4 flex items-center justify-center">
+
+    <!-- 1. LOGIN VIEW (Initially visible) -->
+    <div id="login-view" class="w-full max-w-sm">
+        <!-- Login Card -->
+        <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+            <!-- Updated title to uppercase using 'uppercase' Tailwind class -->
+            <h2 class="text-3xl font-bold text-center text-gray-900 mb-2 uppercase">ACCESS REQUIRED</h2>
+            <p class="text-center text-gray-500 mb-6">Enter the passcode to view the content.</p>
+
+            <div id="error-message" class="hidden p-3 mb-4 text-sm font-medium text-red-800 bg-red-100 rounded-lg" role="alert">
+                Incorrect passcode. Please try again.
+            </div>
+
+            <div class="space-y-4">
+                <input type="password" id="passcode-input" placeholder="Passcode" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-lg shadow-sm"
+                       onkeydown="if (event.key === 'Enter') handleLogin()">
+                
+                <!-- Login Button with Hover Text (title attribute) -->
+                <button onclick="handleLogin()" id="login-button" title="do not try if it's not yours"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition duration-150 ease-in-out shadow-lg transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    Unlock Content
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. IMAGE CONTENT VIEW (Initially hidden) -->
+    <div id="image-content" class="hidden w-full max-w-4xl mx-auto">
+        
+        <!-- Header and Title -->
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">
+                Competency Test Answers
+            </h1>
+            <p class="text-lg text-gray-600">
+                21 Nov 2025
+            </p>
+        </header>
+
+        <!-- Main Content Container (Image Block) -->
+        <div class="w-full max-w-4xl mx-auto mb-10">
+            
+            <!-- Single Featured Image Block - Now Clickable -->
+            <button onclick="openModal()" class="w-full text-left focus:outline-none">
+                <div class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden transform hover:scale-[1.01] transition duration-300 ease-in-out cursor-pointer">
+                    
+                    <!-- Image: Spans full width of the card, filling the entire container space. -->
+                    <img id="featured-image"
+                         src="https://raw.githubusercontent.com/mysan4938-oss/test.github.oi/refs/heads/CompetencyTest/TM.png" 
+                         alt="Competency Test Answer Image" 
+                         class="w-full h-auto object-cover"
+                         onerror="this.onerror=null; this.src='https://placehold.co/1200x800/cccccc/333333?text=Image+Load+Error';">
+                    
+                </div>
+            </button>
+            
+        </div>
+    </div>
+    
+    <!-- 3. Full-Screen Modal Overlay (Hidden initially) -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex items-center justify-center p-4 transition duration-300" onclick="closeModal()">
+        
+        <!-- Modal Content (Stops propagation to prevent closing when clicking the image itself) -->
+        <div class="max-w-7xl max-h-full overflow-hidden relative" onclick="event.stopPropagation()">
+            
+            <!-- Full Image - Will be populated by JS -->
+            <img id="modal-image" src="" alt="Full Screen View" class="w-full h-auto max-h-screen object-contain rounded-lg shadow-2xl">
+            
+            <!-- Close Button -->
+            <button onclick="closeModal()" 
+                    class="absolute top-4 right-4 text-white p-3 rounded-full bg-red-600/80 hover:bg-red-700/90 transition duration-150 focus:outline-none focus:ring-4 focus:ring-red-300"
+                    aria-label="Close full-screen view">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            
+        </div>
+    </div>
+
+    <!-- JavaScript for Authentication and Modal Functionality -->
+    <script>
+        // --- CONSTANTS ---
+        const CORRECT_PASSCODE = "tm98";
+        const AUTH_KEY = "is_authenticated_tm98"; // Key for session storage
+
+        // --- DOM Elements ---
+        const loginView = document.getElementById('login-view');
+        const imageContent = document.getElementById('image-content');
+        const passcodeInput = document.getElementById('passcode-input');
+        const errorMessage = document.getElementById('error-message');
+        
+        const modalOverlay = document.getElementById('modal-overlay');
+        const featuredImage = document.getElementById('featured-image');
+        const modalImage = document.getElementById('modal-image');
+
+        let imageSrc = ''; // Stores the image source after content is visible
+        
+        // --- AUTHENTICATION FUNCTIONS ---
+
+        function showContent() {
+            // Show the main content
+            loginView.classList.add('hidden');
+            imageContent.classList.remove('hidden');
+            
+            // Adjust body classes to allow content to flow normally (and scroll if needed)
+            document.body.classList.remove('flex', 'items-center', 'justify-center');
+            document.body.classList.add('block');
+            
+            // Set the image source for the modal after content is visible
+            if (featuredImage) {
+                imageSrc = featuredImage.src;
+            }
+        }
+
+        function handleLogin() {
+            const enteredPasscode = passcodeInput.value.trim();
+
+            if (enteredPasscode === CORRECT_PASSCODE) {
+                sessionStorage.setItem(AUTH_KEY, 'true'); // Persist login
+                errorMessage.classList.add('hidden');
+                showContent();
+            } else {
+                // Failed Login
+                errorMessage.classList.remove('hidden');
+                passcodeInput.value = ''; // Clear the input field
+                passcodeInput.focus();
+            }
+        }
+        
+        // Check for session authentication on page load
+        window.onload = function() {
+            if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+                showContent();
+            } else {
+                // Ensure login view is centered
+                loginView.classList.remove('hidden');
+                imageContent.classList.add('hidden');
+                document.body.classList.add('flex', 'items-center', 'justify-center');
+                document.body.classList.remove('block');
+            }
+        };
+
+
+        // --- MODAL FUNCTIONS ---
+
+        function openModal() {
+            // Check if the content is visible (i.e., user is logged in) and imageSrc is set
+            if (!imageContent.classList.contains('hidden') && imageSrc) {
+                modalImage.src = imageSrc;
+                modalOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            }
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Re-enable background scrolling
+        }
+
+        // Close modal on Escape key press
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
+
